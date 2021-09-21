@@ -13,3 +13,6 @@ https://www.npmjs.com/package/trading-indicator
 
 possibly:
 https://github.com/ccxt/ccxt#certified-cryptocurrency-exchanges
+
+
+...
