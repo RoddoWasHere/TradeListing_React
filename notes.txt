@@ -15,4 +15,56 @@ possibly:
 https://github.com/ccxt/ccxt#certified-cryptocurrency-exchanges
 
 
+
 ...
+
+
+GraphQL Queries:
+________________
+
+{
+  instrumentPairHistory(
+    pairSymbol: "BTCUSDT",
+    startUctTime: 1632748500000,
+    endUctTime: 1632749400000
+  ){
+    symbol
+    priceHistory{
+      high
+      low
+      close
+      open
+    }
+  }
+}
+
+
+{
+  instrumentPair(pairSymbol: "BTCUSDT"){
+    symbol
+    priceHistory{
+      high
+    }
+  }
+}
+
+{
+  instrumentPairsHistory(
+    pairSymbols: ["BTCUSDT", "ETHBTC"],
+    startUctTime: 1632748500000,
+    endUctTime: 1632749400000
+  ){
+
+    symbol
+    baseInstrument{
+      symbol
+    }
+    quoteInstrument{
+      symbol
+    }
+    priceHistory{
+      uCTTime
+      high
+    }
+  }
+}

@@ -337,12 +337,50 @@ function getCoinSymbolLookup(coins : ICoinResponse[]){ // what its quoted in...
 
 const apiUrl = `http://localhost:5000/`;
 
+class InstrumentStat{
+  symbol: string;
+  name: string;
+  instrumentData: IInstrument;
+  
+  constructor(instrument: IInstrument){
+      this.instrumentData = instrument;
+      this.symbol = instrument.symbol;
+      this.symbol = instrument.name;
+  }
+
+}
+
+class InstrumentPairStat{
+  symbol: string;
+  name: string;
+
+  baseInstrument: InstrumentStat;
+  quoteInstrument: InstrumentStat;
+
+  instrumentPairData: IInstrumentPair;
+
+  getName(){
+    return `${this.baseInstrument.name} / ${this.quoteInstrument.name} `;
+  }
+
+
+  constructor(instrumentPair: IInstrumentPair, baseInstrument:InstrumentStat,  quoteInstrument:InstrumentStat){
+    this.instrumentPairData = instrumentPair;  
+    
+    this.name = this.getName();
+
+    this.baseInstrument = baseInstrument;
+    this.quoteInstrument = quoteInstrument;
+
+    this.symbol = instrumentPair.symbol;
+  }
+}
 
 
 export const App = () => {
   //useQuery()
 
-  //const [tradeLookup, setTradeLookup] = useState<TradeLookup>();
+  const [] = useState({});
 
 
 
@@ -497,32 +535,14 @@ export const App = () => {
     }
   };
 
-
   const onListingSelect = (instrPair: IInstrumentPair) =>{
     console.log("instrPair?", instrPair);
-    if(instrPair != null && instrPair.symbol != null)
-      setChartState({symbol: instrPair.symbol});
-    
   };
-
-  let setChartState = (newState: any) =>{};
-
-  var chartStateSet = (setState: any) => {
-    console.log("got set state", setState);
-    setChartState = setState;
-  };
-
-  //const [selectedPair, setSelectedPair ] = useState<string>();
-
-
-  let ChartElement = <> </>;
-  //if(selectedPair != null)  ChartElement = <ChartTest symbol={""} setStateSetter={chartStateSet}/>
-  ChartElement
 
   //let ticker = indicators.ticker("binance", "BTC/USDT", true);
     return (
       <>
-        <ChartTest symbol={""} setStateSetter={chartStateSet}/>
+        <ChartTest/>
         <PairListing onSelect={onListingSelect}/>
         
         <PaginatorTest/>
