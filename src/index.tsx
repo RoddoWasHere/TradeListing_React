@@ -15,7 +15,26 @@ import { TradeInfoProvider } from "./TradeUtitlies";
 
 const client = new ApolloClient({
     uri: 'https://localhost:5001/graphql',
-    cache: new InMemoryCache()
+    cache: new InMemoryCache(),
+    typeDefs: gql`
+        enum KlineInterval {
+            ONE_MINUTE
+            THREE_MINUTES
+            FIVE_MINUTES
+            FIFTEEN_MINUTES
+            THIRTY_MINUTES
+            ONE_HOUR
+            TWO_HOUR
+            FOUR_HOUR
+            SIX_HOUR
+            EIGHT_HOUR
+            TWELVE_HOUR
+            ONE_DAY
+            THREE_DAY
+            ONE_WEEK
+            ONE_MONTH
+        }
+    `,
 });
  
 console.log("testing client...");

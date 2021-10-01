@@ -2,6 +2,7 @@ import {
     useQuery,
     gql
 } from "@apollo/client";
+import { InstrumentPairStat, InstrumentStat } from "./TradeUtitlies";
 
 const GetPairSymbols = gql`
   query {
@@ -34,12 +35,12 @@ export interface IInstrumentPair{
 
 interface IPairListingProps {
     onListingSelect?: (listItem: any) => void
-    onSelect?: (pairListItem: IInstrumentPair) => void
+    onSelect?: (pairListItem: InstrumentPairStat) => void
 }
 
 interface IPairListItemProps {
-    pair: IInstrumentPair
-    onSelect?: (pairListItem: IInstrumentPair) => void
+    pair: InstrumentPairStat
+    onSelect?: (pairListItem: InstrumentPairStat) => void
 }
 
 const PairListItem = (props: IPairListItemProps) => {
@@ -62,7 +63,11 @@ const PairListing = (props: IPairListingProps) => {
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error :(</p>;
     
-            
+    var instrumentPairStats = data.instrumentPairs.map( (pair: IInstrumentPair ) => {
+        var base = new InstrumentStat(pair.baseInstrument);
+        var quote = new InstrumentStat(pair.quoteInstrument);//TODO: Add to lookup
+        return new InstrumentPairStat(pair, base, quote);
+    });        
     //var tit
     
     const divMainStyle = {
@@ -78,7 +83,7 @@ const PairListing = (props: IPairListingProps) => {
                 <th>Name</th>
             </tr>
             {
-                data.instrumentPairs.map(( pair: any ) => (
+                instrumentPairStats.map(( pair: any ) => (
                     <PairListItem 
                         pair={pair} 
                         onSelect={props.onSelect}

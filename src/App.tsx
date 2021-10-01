@@ -3,10 +3,10 @@ import reactPng from "./React.png";
 import reactSvg from "./React-icon.svg";
 //import tradeAPI from "./tradeAPI.js";
 import axios from "axios";
-import { useEffect, useState } from 'react';
+import { CSSProperties, useEffect, useState } from 'react';
 //import ReactHtmlParser from 'react-html-parser';
 
-import LightweightChart,{seriesDataSample, ChartTest} from "./ChartTest";
+import LightweightChart,{seriesDataSample, ChartTest, IChartState} from "./ChartTest";
 
 console.log("loaded module", LightweightChart);
 
@@ -16,6 +16,8 @@ import {
 } from "@apollo/client";
 import { PaginatorTest } from './PaginatorTest';
 import PairListing, { IInstrument, IInstrumentPair } from './PairListing';
+import { InstrumentPairStat, ITradeInfoProviderState, KlineInterval, useTradeInfo } from './TradeUtitlies';
+import { IRadioSelectItem, RadioSelect } from './Components';
 
 //@ts-ignore
 //import indicators from "trading-indicator";
@@ -137,7 +139,7 @@ const GetPriceHistory = gql`
 // };
 
 
-const Accordian = (props: any) => {
+export const Accordian = (props: any) => {
   const subComponent = props.subComponent;
   const [isCollapsed, setIsCollapsed] = useState<boolean>(props.isCollapsed || true);
 
@@ -220,7 +222,7 @@ function replaceAllIgnoreCase(text, find, replaceF){
   return split.join("");
 }
 
-const FindHighlight = (props: any) => {
+export const FindHighlight = (props: any) => {
   const text = props.text;
   const match = props.match;
 
@@ -242,6 +244,8 @@ isLegalMoney: i.e. national currency
 
 
 */
+
+
 
 
 interface ICoinResponse{
@@ -332,10 +336,169 @@ function getCoinSymbolLookup(coins : ICoinResponse[]){ // what its quoted in...
 }
 
 
+class InnerState{
+  state: any;
+  setState = (stateSet: any) => {};
+
+  object: any = {state:""};
+
+  constructor(){
+    this.state = {};
+  }
+
+  getOnStateCreate(){
+    const f = (newState: any[]) =>{
+      this.onStateCreate(newState);
+    };
+    return f;
+  }
+
+  onStateCreate(newStateSet:any[]) {
+    console.log("onStateCreate?", newStateSet[0], newStateSet[1]);
+    var newState = newStateSet[0];
+    
+    //this.object.state = 2;
+    this.state = newStateSet[0];
+    this.setState = newStateSet[1];
+  };
+ 
+};
+
+
+
+
+//@ts-ignore
+window.InnerState = InnerState;
+
+interface ISymbolPairPreviewProps{
+  instrumentPair: InstrumentPairStat
+  setOnStateCreate: any
+}
+
+interface ISymbolPairPreviewState{
+  symbol: string
+  instrumentPair: InstrumentPairStat | null
+  klineInterval: KlineInterval
+}
+
+const SymbolPairPreview = (props: ISymbolPairPreviewProps) => {
+  
+  const tradeInfo: ITradeInfoProviderState = useTradeInfo();
+
+  //@ts-ignore
+  window.tradeInfo = tradeInfo;
+
+
+  console.log("(Preview) tradeInfo", tradeInfo);
+
+  let chartStateNew = new InnerState();
+  const [state, setStateAux] = useState<ISymbolPairPreviewState>({
+      klineInterval: KlineInterval.OneDay,
+      instrumentPair: props.instrumentPair,
+      symbol:"",
+      //selectedRadioItem: null,
+  });
+  const setState = (newState: ISymbolPairPreviewState) =>{
+    console.log("got external setState (preview)", newState);
+
+    //forward state down
+    //chartStateNew.setState(
+    const symbol = newState.instrumentPair ? newState.instrumentPair.symbol : "";
+
+    const newChartState: IChartState = {
+      //symbol: newState.instrumentPair.symbol, 
+      symbol: symbol,//newState.instrumentPair?.symbol,// .instrumentPair.symbol,
+      klineInterval: newState.klineInterval,
+      timeSeries:[]
+    }
+    chartStateNew.setState(newChartState);
+    //});
+
+    setStateAux(newState);
+  }
+  props.setOnStateCreate([state, setState]);
+
+  const name = state.instrumentPair ? state.instrumentPair.name : " no name? ";
+  const symbol = state.instrumentPair ? state.instrumentPair.symbol : " no symbol? ";
+
+  //const klineInterval = KlineInterval.OneDay;
+  const setKlineInterval = (newInterval: KlineInterval) => {
+      
+      var newState = {...state};
+      newState.klineInterval = newInterval;
+      console.log("(setKlineInterval) got cur state", state, newState);
+      setState(newState);
+  };
+
+  var onRadioSelect = (event:any, data: any) => {
+      console.log("(Chart)got select...", event, data);
+      if(data && data.interval !== null){
+          tradeInfo.currentInterval = data.interval;
+          setKlineInterval(data.interval as KlineInterval);
+      }
+  }
+  var radiosSelects: IRadioSelectItem[] = [
+      {component: "1m", data:  {interval:KlineInterval.OneMinute}},
+      {component: "15m", data: {interval:KlineInterval.FifteenMinutes}},
+      {component: "1h", data:  {interval:KlineInterval.OneHour}},
+      {component: "1d", data:  {interval:KlineInterval.OneDay}},
+      {component: "1M", data:  {interval:KlineInterval.OneMonth}},
+  ];
+
+  var currentInterval = tradeInfo.currentInterval;
+
+  var findRadioItem: any = radiosSelects.find(i => i.data.klineInterval == currentInterval);
+  var defaultSelection:IRadioSelectItem =  (findRadioItem==null) ? radiosSelects[0] :findRadioItem;
+  //var defaultSelection = findRadioItem.length > 0 ? findRadioItem[0].data.interval : KlineInterval.OneDay;
+
+  var selectStyle = {
+    backgroundColor: "#333",
+    color:"#fff",
+  };
+
+  const findFunc = (si: any) => {
+    console.log("got find funciton",si);
+    //return true;
+    return si.data.interval == tradeInfo.currentInterval;
+  };
+  
+  console.log(" ---preview rerender...", state)
+
+  return (<div>
+    <h3>{name}</h3>
+    <h4>{symbol} </h4>
+    <div>
+      <button onClick={() => setKlineInterval(KlineInterval.OneMinute)}>1m</button> 
+      <button onClick={() => setKlineInterval(KlineInterval.FifteenMinutes)}>15m</button> 
+      <button onClick={() => setKlineInterval(KlineInterval.OneHour)}>1h</button> 
+      <button onClick={() => setKlineInterval(KlineInterval.OneDay)}>1d</button> 
+      <button onClick={() => setKlineInterval(KlineInterval.OneMonth)}>1M</button> 
+    </div>
+    <ChartTest 
+        symbol={symbol}        
+        //setStateSetter={chartStateSet}
+        //update={getInnerState}
+        //update={setTest}
+        update = {chartStateNew.getOnStateCreate()}
+      />
+      <RadioSelect 
+        selectItems={radiosSelects} 
+        defaultSelection={defaultSelection}
+        onSelect = {onRadioSelect}
+        selectStyle = {selectStyle}
+        findFunc = {findFunc}
+      />
+    </div>
+  );
+
+};
 
 
 
 const apiUrl = `http://localhost:5000/`;
+
+
+
 
 
 
@@ -344,185 +507,107 @@ export const App = () => {
 
   //const [tradeLookup, setTradeLookup] = useState<TradeLookup>();
 
+  //const [state, setState] = useState({});
 
+  let pairPreviewState = new InnerState();
 
-  const getCoins = async() => {
-    const endPoint = `${apiUrl}${"coins"}`; 
-    console.log("endPoint:", endPoint);
-    const response = await axios.get<ICoinResponse[]>(endPoint);
-    if (response.status == 200) {
-      //return response.data;
-      console.log("resp:", response.data);
-      return response.data;
-    }
-    throw new Error(response.status.toString());
-    //console.log("resp:", response);
+  const tradeInfo = useTradeInfo();
 
-  }
-
-  const getMarginPairs = async() => {
-    const endPoint = `${apiUrl}${"pairs"}`; 
-    console.log("endPoint:", endPoint);
-    const response = await axios.get<IMarginPairResponse[]>(endPoint);
-    if (response.status == 200) {
-      //return response.data;
-      console.log("resp:", response.data);
-      return response.data;
-    }
-    throw new Error(response.status.toString());
-    //console.log("resp:", response);
-
-  }
-  const getSymbols = async() => {
-    const endPoint = `${apiUrl}${"exchange_info"}`; 
-    console.log("endPoint:", endPoint);
-    const response = await axios.get<IExchangeInfo>(endPoint);
-    if (response.status == 200) {
-      //return response.data;
-      console.log("resp:", response.data);
-      return response.data;
-    }
-    throw new Error(response.status.toString());
-    //console.log("resp:", response);
-
-  }
-
-
-  const [coinsState, setCoinsState] = useState<ICoinResponse[]>([]);
-  const [symbolsState, setSymbolsState] = useState<IExchangeSymbol[]>([]);
-  const [searchText, setSearchText] = useState<string>("");
-
-  const [lookups, setLookups] = useState<ILookupSet>({
-    coinSymbolLookup: undefined,
-    baseSymbolLookup: undefined,
-    quoteSymbolLookup: undefined,
-  });
-
-  //let coinSymbolLookup: ILookup;
-
-  useEffect(()=>{
-    const setup = async() => {
-      const coins = await getCoins();
-      coins.sort((a,b)=> a.name.localeCompare(b.name));
-      const coinSymbolLookup = getCoinSymbolLookup(coins);
-      lookups.coinSymbolLookup = coinSymbolLookup;
-      setLookups(lookups);
-
-      console.log("set")
-      
-      setCoinsState(coins);
-
-      //@ts-ignore
-      window.coinSymbolLookup = coinSymbolLookup; 
-
-      const exchangeInfo = await getSymbols();
-      const quotedLookup = getBaseSymbolLookup(exchangeInfo.symbols);
-      const quotedInLookup = getQuotedSymbolLookup(exchangeInfo.symbols);
-      setSymbolsState(exchangeInfo.symbols);
-
-      //@ts-ignore
-      window.pairsLookup = quotedLookup;
-      //@ts-ignore
-      window.quotedInLookup = quotedInLookup;
-    };
-    setup();
-  }, []);
-
-  let coinsTp = [...coinsState];
-  let symbolsTp = [...symbolsState];
-  //let coinsTp = coinsState.filter(c => c.isLegalMoney)
-
-  //filter on search text:
-  // if(searchText != ""){
-  //   coinsTp = coinsState.filter(c => c.isLegalMoney)
-  // }
-
-
-  let symbolsListing: any[] = [];
-  if(lookups.coinSymbolLookup !== undefined){
-    console.log("got coinSymbolLookup");
-    symbolsListing = symbolsTp.map(symbol => {
-      const asString = JSON.stringify(symbol, null, 4);
-      const comp = <pre style={{backgroundColor:"black", color:"white"}}>{asString}</pre>;
-      //const textMain = `${symbol.name} (${symbol.coin})`;   
-
-      //@ts-ignore
-      const baseName = lookups.coinSymbolLookup[symbol.baseAsset] ? lookups.coinSymbolLookup[symbol.baseAsset].name : "?";
-      //console.log("baseName?", baseName);
-      //@ts-ignore
-      const quoteName = lookups.coinSymbolLookup[symbol.quoteAsset] ? lookups.coinSymbolLookup[symbol.quoteAsset].name : "?";
-
-      const shortText = `${symbol.baseAsset}/${symbol.quoteAsset}`;
-      const textMain = `(${shortText}) ${baseName} / ${quoteName}`; 
-      
-
-      return ({
-        component: <Accordian subComponent={comp}>
-          <FindHighlight text={textMain} match={searchText}/>
-        </Accordian>,
-        mainText: textMain,
-      });
-    });
-  }
-
-  let coinslisting = coinsTp.map(coin => {
-    const asString = JSON.stringify(coin, null, 4);
-    const comp = <pre style={{backgroundColor:"black", color:"white"}}>{asString}</pre>;
-    const textMain = `${coin.name} (${coin.coin})`;   
-
-    return ({
-      component: <Accordian subComponent={comp}>
-        <FindHighlight text={textMain} match={searchText}/>
-      </Accordian>,
-      mainText: textMain,
-    });
-  });
-
-  if(searchText != ""){
-    coinslisting = coinslisting.filter(l => 
-      l.mainText.toLowerCase().indexOf(searchText.toLowerCase()) != -1
-    );
-
-    symbolsListing = symbolsListing.filter(s => 
-      s.mainText.toLowerCase().indexOf(searchText.toLowerCase()) != -1
-    );
-  }
-
-
-  const onInput = (event: any) => {
-    //console.log("got input", event.target.value);
-    const find = event.target.value;
-    if(find != searchText){
-      setSearchText(find);
-    }
-  };
-
-
-  const onListingSelect = (instrPair: IInstrumentPair) =>{
+  const onListingSelect = (instrPair: InstrumentPairStat) =>{
     console.log("instrPair?", instrPair);
-    if(instrPair != null && instrPair.symbol != null)
-      setChartState({symbol: instrPair.symbol});
+
     
+    if(instrPair != null && instrPair.symbol != null){
+      //setChartState({symbol: instrPair.symbol});    
+      tradeInfo.currentPair = instrPair;
+
+
+      
+      const newPairPreviewState: ISymbolPairPreviewState = {
+        instrumentPair: instrPair, 
+        klineInterval: KlineInterval.OneDay,
+        symbol: "",
+      };
+      pairPreviewState.setState(newPairPreviewState);
+      //pairPreviewState.setState({symbol: instrPair.symbol, timeSeries:[]});
+      //setChartState()
+    }
   };
 
-  let setChartState = (newState: any) =>{};
+  // let setChartState = (newState: any) =>{};
 
-  var chartStateSet = (setState: any) => {
-    console.log("got set state", setState);
-    setChartState = setState;
-  };
+  // var chartStateSet = (setState: any) => {//deprecate
+  //   console.log("got set state", setState);
+  //   setChartState = setState;
+  // };
+  
+
+
+  
+
+  // let setChartState = (newState: any)  => {
+  //   console.log("(App) got inner setState invoke", newState);
+  //   setChartStateAux(newState);
+  // };
+  //let [pairPreviewState, setPairPreviewState] = [null, (newState:any)=>{}];
+  // const getInnerState = (innerState: any[]) => {
+  //   chartState = innerState[0];
+  //   setChartState = innerState[1];
+  // };
+
+  // var setChartState = (setState: any) => {
+  //   //console.log("got set state", setState);
+  //   //setChartState = setState;
+    
+  // };
 
   //const [selectedPair, setSelectedPair ] = useState<string>();
 
+  
 
-  let ChartElement = <> </>;
+
+
+  // var setTest = (newState: any) =>{ 
+  //   chartStateNew.onStateCreate(newState);
+  // };
+  // let ChartElement = <> </>;
   //if(selectedPair != null)  ChartElement = <ChartTest symbol={""} setStateSetter={chartStateSet}/>
-  ChartElement
+  //ChartElement
 
   //let ticker = indicators.ticker("binance", "BTC/USDT", true);
+  // var setChartUpdate = (updateFunc) => { 
+
+    var onRadioSelect = (event:any, data: any) =>{
+      console.log("(App)got select...", event, data);
+    }
+    var radiosSelects: IRadioSelectItem[] = [
+      {component: "A", data: {a:"A"}},
+      {component: "B", data: {a:"B"}},
+      {component: "C", data: {a:"C"}},
+      {component: "D", data: {a:"D"}}
+    ];
+  // };
+    var selectStyle = {
+      backgroundColor: "#333",
+      color:"#fff",
+    }
+
     return (
       <>
-        <ChartTest symbol={""} setStateSetter={chartStateSet}/>
+        <RadioSelect 
+          selectItems={radiosSelects} 
+          defaultSelection={radiosSelects[0]}
+          onSelect = {onRadioSelect}
+          selectStyle = {selectStyle}
+        />
+        <SymbolPairPreview setOnStateCreate={pairPreviewState.getOnStateCreate()}/>
+        {/* <ChartTest 
+          symbol={""}
+          //setStateSetter={chartStateSet}
+          //update={getInnerState}
+          //update={setTest}
+          update = {pairPreviewState.getOnStateCreate()}
+        /> */}
         <PairListing onSelect={onListingSelect}/>
         
         <PaginatorTest/>
@@ -533,11 +618,7 @@ export const App = () => {
 
 
 
-        <h1>Crypocurrency listing</h1>
-        <input onInput={onInput}/>
-        <ul>
-          { symbolsListing.map(l=>l.component) }
-        </ul>
+
       </>
     )
   }
