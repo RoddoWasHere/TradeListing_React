@@ -6,16 +6,16 @@ import axios from "axios";
 import { useEffect, useState } from 'react';
 //import ReactHtmlParser from 'react-html-parser';
 
-import LightweightChart,{seriesDataSample, ChartTest} from "./ChartTest";
+import LightweightChart,{seriesDataSample, ChartTest} from "../Components/Chart";
 
-console.log("loaded module", LightweightChart);
+//console.log("loaded module", LightweightChart);
 
 import {
   useQuery,
   gql
 } from "@apollo/client";
-import { PaginatorTest } from './PaginatorTest';
-import PairListing, { IInstrument, IInstrumentPair } from './PairListing';
+import { PaginatorTest } from '../Components/PaginatorTest';
+import PairListing, { IInstrument, IInstrumentPair } from '../Components/PairListing';
 
 //@ts-ignore
 //import indicators from "trading-indicator";
@@ -150,14 +150,16 @@ const Accordian = (props: any) => {
   };
   return (
     <table>
-      <tr>
-        <td><span onClick={iconClick.bind(this)}>{icon}</span></td>
-        <td>{props.children}</td>
-      </tr>
-      <tr style={subStyle}>
-        <td></td>
-        <td>{subComponent}</td>
-      </tr>
+      <tbody>
+        <tr>
+          <td><span onClick={iconClick.bind(this)}>{icon}</span></td>
+          <td>{props.children}</td>
+        </tr>
+        <tr style={subStyle}>
+          <td></td>
+          <td>{subComponent}</td>
+        </tr>
+      </tbody>
     </table>
   );
 }
@@ -377,7 +379,7 @@ class InstrumentPairStat{
 }
 
 
-export const App = () => {
+export const AppPrev = () => {
   //useQuery()
 
   const [] = useState({});
@@ -386,11 +388,11 @@ export const App = () => {
 
   const getCoins = async() => {
     const endPoint = `${apiUrl}${"coins"}`; 
-    console.log("endPoint:", endPoint);
+    //console.log("endPoint:", endPoint);
     const response = await axios.get<ICoinResponse[]>(endPoint);
     if (response.status == 200) {
       //return response.data;
-      console.log("resp:", response.data);
+      //console.log("resp:", response.data);
       return response.data;
     }
     throw new Error(response.status.toString());
@@ -400,11 +402,11 @@ export const App = () => {
 
   const getMarginPairs = async() => {
     const endPoint = `${apiUrl}${"pairs"}`; 
-    console.log("endPoint:", endPoint);
+    //console.log("endPoint:", endPoint);
     const response = await axios.get<IMarginPairResponse[]>(endPoint);
     if (response.status == 200) {
       //return response.data;
-      console.log("resp:", response.data);
+      //console.log("resp:", response.data);
       return response.data;
     }
     throw new Error(response.status.toString());
@@ -413,11 +415,11 @@ export const App = () => {
   }
   const getSymbols = async() => {
     const endPoint = `${apiUrl}${"exchange_info"}`; 
-    console.log("endPoint:", endPoint);
+    //console.log("endPoint:", endPoint);
     const response = await axios.get<IExchangeInfo>(endPoint);
     if (response.status == 200) {
       //return response.data;
-      console.log("resp:", response.data);
+      //console.log("resp:", response.data);
       return response.data;
     }
     throw new Error(response.status.toString());
@@ -446,7 +448,7 @@ export const App = () => {
       lookups.coinSymbolLookup = coinSymbolLookup;
       setLookups(lookups);
 
-      console.log("set")
+      //console.log("set")
       
       setCoinsState(coins);
 
@@ -478,7 +480,7 @@ export const App = () => {
 
   let symbolsListing: any[] = [];
   if(lookups.coinSymbolLookup !== undefined){
-    console.log("got coinSymbolLookup");
+    //console.log("got coinSymbolLookup");
     symbolsListing = symbolsTp.map(symbol => {
       const asString = JSON.stringify(symbol, null, 4);
       const comp = <pre style={{backgroundColor:"black", color:"white"}}>{asString}</pre>;
@@ -536,15 +538,14 @@ export const App = () => {
   };
 
   const onListingSelect = (instrPair: IInstrumentPair) =>{
-    console.log("instrPair?", instrPair);
+    ;//console.log("instrPair?", instrPair);
   };
 
   //let ticker = indicators.ticker("binance", "BTC/USDT", true);
     return (
       <>
         <ChartTest/>
-        <PairListing onSelect={onListingSelect}/>
-        
+        <PairListing onSelect={onListingSelect}/>        
         <PaginatorTest/>
         <FindHighlight text="abcdhjkabcjklaba" match="a"/>
         <Accordian subComponent={"that"}>

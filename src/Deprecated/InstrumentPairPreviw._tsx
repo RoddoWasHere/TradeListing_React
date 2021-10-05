@@ -1,0 +1,129 @@
+import ChartTest from "./ChartTest";
+import { IRadioSelectItem, RadioSelect } from "./Components";
+import { InstrumentPairStat, ITradeInfoProviderState, KlineInterval } from "./TradeUtitlies";
+
+
+
+
+
+//@ts-ignore
+window.InnerState = InnerState;
+
+export interface ISymbolPairPreviewProps{
+  instrumentPair: InstrumentPairStat
+  setOnStateCreate: any
+}
+
+export interface ISymbolPairPreviewState{
+  symbol: string
+  instrumentPair: InstrumentPairStat | null
+  klineInterval: KlineInterval
+}
+
+export const SymbolPairPreview = (props: ISymbolPairPreviewProps) => {
+  
+  const tradeInfo: ITradeInfoProviderState = useTradeInfo();
+
+  //@ts-ignore
+  window.tradeInfo = tradeInfo;
+
+
+  console.log("(Preview) tradeInfo", tradeInfo);
+
+  let chartStateNew = new InnerState();
+  const [state, setStateAux] = useState<ISymbolPairPreviewState>({
+      klineInterval: KlineInterval.OneDay,
+      instrumentPair: props.instrumentPair,
+      symbol:"",
+      //selectedRadioItem: null,
+  });
+  const setState = (newState: ISymbolPairPreviewState) =>{
+
+    const symbol = newState.instrumentPair ? newState.instrumentPair.symbol : "";
+
+    const newChartState: IChartState = {
+      symbol: symbol,//newState.instrumentPair?.symbol,// .instrumentPair.symbol,
+      klineInterval: newState.klineInterval,
+      timeSeries:[]
+    }
+    chartStateNew.setState(newChartState);
+    //});
+
+    setStateAux(newState);
+  }
+  props.setOnStateCreate([state, setState]);
+
+  const name = state.instrumentPair ? state.instrumentPair.name : " no name? ";
+  const symbol = state.instrumentPair ? state.instrumentPair.symbol : " no symbol? ";
+
+  //const klineInterval = KlineInterval.OneDay;
+  const setKlineInterval = (newInterval: KlineInterval) => {
+      
+      var newState = {...state};
+      newState.klineInterval = newInterval;
+      console.log("(setKlineInterval) got cur state", state, newState);
+      setState(newState);
+  };
+
+  var onRadioSelect = (event:any, data: any) => {
+      console.log("(Chart)got select...", event, data);
+      if(data && data.interval !== null){
+          tradeInfo.currentInterval = data.interval;
+          setKlineInterval(data.interval as KlineInterval);
+      }
+  }
+  var radiosSelects: IRadioSelectItem[] = [
+      {component: "1m", data:  {interval:KlineInterval.OneMinute}},
+      {component: "15m", data: {interval:KlineInterval.FifteenMinutes}},
+      {component: "1h", data:  {interval:KlineInterval.OneHour}},
+      {component: "1d", data:  {interval:KlineInterval.OneDay}},
+      {component: "1M", data:  {interval:KlineInterval.OneMonth}},
+  ];
+
+  var currentInterval = tradeInfo.currentInterval;
+
+  var findRadioItem: any = radiosSelects.find(i => i.data.klineInterval == currentInterval);
+  var defaultSelection:IRadioSelectItem =  (findRadioItem==null) ? radiosSelects[0] :findRadioItem;
+  //var defaultSelection = findRadioItem.length > 0 ? findRadioItem[0].data.interval : KlineInterval.OneDay;
+
+  var selectStyle = {
+    backgroundColor: "#333",
+    color:"#fff",
+  };
+
+  const findFunc = (si: any) => {
+    console.log("got find funciton",si);
+    //return true;
+    return si.data.interval == tradeInfo.currentInterval;
+  };
+  
+  console.log(" ---preview rerender...", state)
+
+  return (<div>
+    <h3>{name}</h3>
+    <h4>{symbol} </h4>
+    <div>
+      <button onClick={() => setKlineInterval(KlineInterval.OneMinute)}>1m</button> 
+      <button onClick={() => setKlineInterval(KlineInterval.FifteenMinutes)}>15m</button> 
+      <button onClick={() => setKlineInterval(KlineInterval.OneHour)}>1h</button> 
+      <button onClick={() => setKlineInterval(KlineInterval.OneDay)}>1d</button> 
+      <button onClick={() => setKlineInterval(KlineInterval.OneMonth)}>1M</button> 
+    </div>
+    <ChartTest 
+        symbol={symbol}        
+        //setStateSetter={chartStateSet}
+        //update={getInnerState}
+        //update={setTest}
+        update = {chartStateNew.getOnStateCreate()}
+      />
+      <RadioSelect 
+        selectItems={radiosSelects} 
+        defaultSelection={defaultSelection}
+        onSelect = {onRadioSelect}
+        selectStyle = {selectStyle}
+        findFunc = {findFunc}
+      />
+    </div>
+  );
+
+};

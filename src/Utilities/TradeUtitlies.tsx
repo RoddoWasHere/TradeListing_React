@@ -1,27 +1,17 @@
 
-import { IInstrument, IInstrumentPair } from "./PairListing";
-
-
+import { IInstrument, IInstrumentPair } from "../Components/PairListing";
 
 import React, { Component, useContext } from "react";
+import { ITimeSeriesData } from "../Components/ChartTest";
 
 export const TradeInfoContext = React.createContext({});
 
-const tradeInfoData = {
-
-
-
-};
-
-//@ts-ignore
-window.TradeInfoContext = TradeInfoContext;
 
 export interface ITradeInfoProviderState{
-    //setState:(newState: ITradeInfoProviderState) => void
     tradeLookup:ITradeLookup
     currentPair: InstrumentPairStat | null
     currentInterval: KlineInterval
-
+    currentTimeSeries: ITimeSeriesData[]
 }
 
 export class TradeInfoProvider extends Component {
@@ -30,37 +20,20 @@ export class TradeInfoProvider extends Component {
         var curState = {
             ...newState
         };
-        //this.setState(newState)
     } 
 
     state: ITradeInfoProviderState = {
-        //setState: (newState: ITradeInfoProviderState) => this.setState(newState),
         tradeLookup: {
             pairs: null,
             symbols: null,
         },
         currentPair: null,
-        currentInterval: KlineInterval.OneDay
+        currentInterval: KlineInterval.OneDay,
+        currentTimeSeries: [],
     };
-    //  = {
-    //     cars: {
-    //         car001: { name: 'Honda', price: 100 },
-    //         car002: { name: 'BMW', price: 150 },
-    //         car003: { name: 'Mercedes', price: 200 }
-    //     }
-    // };
-
-    //tradeLookup:ITradeLookup;
-
-    
 
     constructor(props: any){
         super(props);
-        // this.tradeLookup = {
-        //     pairs:null,
-        //     symbols: null,
-        // };
-
     }
 
     render() {
@@ -77,9 +50,8 @@ export class TradeInfoProvider extends Component {
 
 
 export function useTradeInfo(){
-    const context: ITradeInfoProviderState =  useContext(TradeInfoContext);
+    const context: ITradeInfoProviderState = useContext(TradeInfoContext) as ITradeInfoProviderState;
     return context;
-    //return [context, (ctx: ITradeInfoProviderState) => context.setState(ctx)];
 }
 
 
@@ -152,7 +124,6 @@ intervalMapToEnum["ONE_MONTH"] = KlineInterval.OneMonth;
 export const IntervalToString = (interval: KlineInterval) => {
 
 };
-//const value = useContext(TradeInfoContext);
 
 
 export class InstrumentStat{
@@ -177,47 +148,40 @@ export class InstrumentStat{
   
     instrumentPairData: IInstrumentPair;
   
-    getName(){
-      return `${this.baseInstrument.name} / ${this.quoteInstrument.name} `;
+    getNiceName(){
+        return `${this.baseInstrument.name} / ${this.quoteInstrument.name} `;
     }
-  
+    getNiceSymbol(){
+        return `${this.baseInstrument.symbol} / ${this.quoteInstrument.symbol} `;
+    }
   
     constructor(instrumentPair: IInstrumentPair, baseInstrument:InstrumentStat,  quoteInstrument:InstrumentStat){
-      this.instrumentPairData = instrumentPair;  
-      this.baseInstrument = baseInstrument;
-      this.quoteInstrument = quoteInstrument;
+        this.instrumentPairData = instrumentPair;  
+        this.baseInstrument = baseInstrument;
+        this.quoteInstrument = quoteInstrument;
 
 
-      this.name = this.getName();
-  
+        this.name = this.getNiceName();
+    
 
-  
-      this.symbol = instrumentPair.symbol;
+    
+        this.symbol = instrumentPair.symbol;
     }
-  }
+}
   
 export type ILookup<T> = {
     [key: string]: string | T;
 }
   
-  export interface ITradePairLookUp{
+export interface ITradePairLookUp{
     pairs:ILookup<InstrumentPairStat>;
-  }
-  export interface ITradeSymbolLookUp{
+}
+export interface ITradeSymbolLookUp{
     symbols:ILookup<InstrumentStat>;
-  }
-  
-  export interface ITradeLookup{
+}
+
+export interface ITradeLookup{
     pairs: ITradePairLookUp | null;
     symbols: ITradeSymbolLookUp | null;
-  }
-  
-  /* 
-  USE CASE:
+}
 
-  const tradeLookup: ITradeLookup = {
-    pairs: null,
-    symbols: null,
-  };
-  
-  */

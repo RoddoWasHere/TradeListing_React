@@ -6,11 +6,9 @@ import {
     ApolloClient,
     InMemoryCache,
     ApolloProvider,
-    useQuery,
     gql
 } from "@apollo/client";
-import { TradeInfoProvider } from "./TradeUtitlies";
-
+import { TradeInfoProvider } from "./Utilities/TradeUtitlies";
 
 
 const client = new ApolloClient({
@@ -37,22 +35,6 @@ const client = new ApolloClient({
     `,
 });
  
-console.log("testing client...");
-
-client
-  .query({
-    query: gql`
-      query {
-        instrumentPairs{
-            symbol
-        }
-      }
-    `
-  })
-  .then(result => console.log("query test", result));
-  
-
-
 ReactDOM.render(
     <ApolloProvider client={client}>
         <TradeInfoProvider>

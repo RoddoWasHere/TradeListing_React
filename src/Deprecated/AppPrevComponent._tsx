@@ -9,11 +9,11 @@ const AppPrev = () => {
   
   const getCoins = async() => {
     const endPoint = `${apiUrl}${"coins"}`; 
-    console.log("endPoint:", endPoint);
+    //console.log("endPoint:", endPoint);
     const response = await axios.get<ICoinResponse[]>(endPoint);
     if (response.status == 200) {
       //return response.data;
-      console.log("resp:", response.data);
+      //console.log("resp:", response.data);
       return response.data;
     }
     throw new Error(response.status.toString());
@@ -23,11 +23,11 @@ const AppPrev = () => {
 
   const getMarginPairs = async() => {
     const endPoint = `${apiUrl}${"pairs"}`; 
-    console.log("endPoint:", endPoint);
+    //console.log("endPoint:", endPoint);
     const response = await axios.get<IMarginPairResponse[]>(endPoint);
     if (response.status == 200) {
       //return response.data;
-      console.log("resp:", response.data);
+      //console.log("resp:", response.data);
       return response.data;
     }
     throw new Error(response.status.toString());
@@ -36,11 +36,11 @@ const AppPrev = () => {
   }
   const getSymbols = async() => {
     const endPoint = `${apiUrl}${"exchange_info"}`; 
-    console.log("endPoint:", endPoint);
+    //console.log("endPoint:", endPoint);
     const response = await axios.get<IExchangeInfo>(endPoint);
     if (response.status == 200) {
       //return response.data;
-      console.log("resp:", response.data);
+      //console.log("resp:", response.data);
       return response.data;
     }
     throw new Error(response.status.toString());
@@ -69,7 +69,7 @@ const AppPrev = () => {
       lookups.coinSymbolLookup = coinSymbolLookup;
       setLookups(lookups);
 
-      console.log("set")
+      //console.log("set")
       
       setCoinsState(coins);
 
@@ -101,7 +101,7 @@ const AppPrev = () => {
 
   let symbolsListing: any[] = [];
   if(lookups.coinSymbolLookup !== undefined){
-    console.log("got coinSymbolLookup");
+    //console.log("got coinSymbolLookup");
     symbolsListing = symbolsTp.map(symbol => {
       const asString = JSON.stringify(symbol, null, 4);
       const comp = <pre style={{backgroundColor:"black", color:"white"}}>{asString}</pre>;

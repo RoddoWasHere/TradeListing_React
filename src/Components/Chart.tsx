@@ -1,16 +1,17 @@
-import LightweightCharts, { createChart, CrosshairMode, UTCTimestamp } from 'lightweight-charts';
-import React, { useContext, useEffect, useState } from 'react';
+import { createChart } from 'lightweight-charts';
+import React, { LegacyRef, useContext, useEffect, useState } from 'react';
 
 import {
-    useQuery,
     gql,
     useLazyQuery
 } from "@apollo/client";
-import { InstrumentPairStat, IntervalTo, KlineInterval, TradeInfoContext, TradeInfoProvider, useTradeInfo } from './TradeUtitlies';
-import { IInstrumentPair } from './PairListing';
-
-console.log("got chart script", LightweightCharts);
-
+import { 
+    InstrumentPairStat,
+    IntervalTo,
+    ITradeInfoProviderState,
+    KlineInterval,
+    TradeInfoContext
+} from '../Utilities/TradeUtitlies';
 
 const GetPriceHistory = gql`
   query History($symbol: String!, $klineInterval: KlineInterval!){
@@ -33,7 +34,7 @@ const GetPriceHistory = gql`
 `;
 
 
-interface ITimeSeriesData{
+export interface ITimeSeriesData{
     time: number | string
     high: number
     low: number
@@ -42,12 +43,12 @@ interface ITimeSeriesData{
 }
 
 interface IChartProps{
-    //timeSeries: ITimeSeriesData[]
     symbol: string,
     setStateSetter?: any,
     update: any,
-    instrumentPair: InstrumentPairStat,
-    dateFormat: string | null,
+    instrumentPair?: InstrumentPairStat,
+    dateFormat?: string,
+    onDataLoaded?: (timeSeries: ITimeSeriesData[]) => void
 }
 
 export interface IChartState{
@@ -57,22 +58,7 @@ export interface IChartState{
     
 }
 
-const ChartTestComponent = (props: IChartProps) => {
-
-
-   
-
-
-    
-    //props.update(()=>{console.log("-->got dynamic update")});
-
-
-    
-
-    //if(state.symbol=="") return <p>invalid symbol</p>;
-    //if(state.symbol=="") return <LightweightChart timeSeries={[]}/>;//no data
-    //if(state.symbol=="")
-
+const ChartComponent = (props: IChartProps) => {
     
     let [getPrices, { loading, error, data, refetch }] = useLazyQuery(GetPriceHistory, 
         {variables:{symbol:"", klineInterval: "ONE_DAY"}
@@ -84,31 +70,22 @@ const ChartTestComponent = (props: IChartProps) => {
         symbol: symbol, 
         klineInterval: KlineInterval.OneDay,
         timeSeries: [],
-        //instrumentPair: props.instrumentPair,
     });
-    //let fetchSymbol = state.symbol;
-    //props.update = ()
 
     const setState = (newState: IChartState) => {
 
         var intervalString = IntervalTo.string(newState.klineInterval);
-        console.log("fetching for interval ", intervalString, "from", newState.klineInterval, newState);
-        //console.trace("fetching for interval--trace");
         data = getPrices({variables:{
             symbol: newState.symbol, 
-            klineInterval: intervalString,// KlineInterval.OneDay// newState.klineInterval,
+            klineInterval: intervalString,
         }});
         setStateAux(newState);
     };
 
     props.update([state, setState]);
 
-    //console.log("chart state..", state);
-
-   
-   
-   
-    const tradeIndo = useContext(TradeInfoContext);
+  
+    const tradeInFo: ITradeInfoProviderState = useContext(TradeInfoContext) as ITradeInfoProviderState;
 
     useEffect(()=>{
 
@@ -116,58 +93,12 @@ const ChartTestComponent = (props: IChartProps) => {
 
     let timeSeries: ITimeSeriesData[] = [];
 
-    // const dispatchSetState = (newState: any) => {
-    //     console.log("got state update", newState, state);
-    //     const fetchSymbol = newState.symbol;
-    //     //setState(newState);
-    //     data = getPrices({variables:{symbol:fetchSymbol}});
-
-    //     if(state.symbol != fetchSymbol){
-    //         console.log("setting state...", newState);
-    //         //state.symbol = fetchSymbol;
-    //         const curState = {...state};
-    //         curState.symbol = fetchSymbol;
-    //         //@ts-ignore
-    //         curState.timeSeries = timeSeries;
-    //         setState(curState);
-    //         //setState({symbol:fetchSymbol});
-    //     }
-    // };
-
-    //props.setStateSetter(dispatchSetState);
-
-
-    //let timeSeries = 
-
-    function formatDate(date: Date) {
-
-        //let a = [{day: 'numeric'}, {month: 'short'}, {year: 'numeric'}];
-        var day = date.getDate().toString().padStart(2,"0");
-        var month = (date.getMonth()+1).toString().padStart(2,"0");
-        var year = date.getFullYear().toString().padStart(4,"0");
-        return `${year}-${month}-${day}`;
-
-     }
-     
-     
-
-
-    //const [timeSeries, setTimeSeries] = useState([]);
-    
-    // const setTradeInfo = a => {
-
-    // };  
-
-    console.log("-----Got state", state.timeSeries);
-
     timeSeries = state.timeSeries;
     if(timeSeries == null) timeSeries = [];
     
     if(data != null){
 
         var chartData: any[] = data.instrumentPairHistory.priceHistory;
-
-        console.log("trade data history:", chartData);
 
         timeSeries = chartData.map((item: any) => 
             ({
@@ -177,15 +108,11 @@ const ChartTestComponent = (props: IChartProps) => {
                 open: item.open,
                 close: item.close,
             }));
-
+        if(props.onDataLoaded) props.onDataLoaded(timeSeries);
     }
-    if(timeSeries.length != 0)
-        console.log("--time series", timeSeries[0]);
-
 
     const mainDivStyle = {
         position: "relative",
-        /* height: 100%; */
         display: "inline-flex"
     } as React.CSSProperties;
 
@@ -217,81 +144,57 @@ const ChartTestComponent = (props: IChartProps) => {
             </div>);
 
         return (
-            <div style ={mainDivStyle}>
+            <div style ={mainDivStyle} className={"chart"} >
                 { overlay }
                 <LightweightChart timeSeries={timeSeries}/>
             </div>);
         }
 
-    if (loading) return getDefaultComponent("loading...")
+    if (loading) return getDefaultComponent("Loading...")
     if (error) return getDefaultComponent("Error");
 
     if (data == null) return getDefaultComponent("No data");
-    console.log("tradeIndo", tradeIndo);
-    // return <ul>
-    //     {chartData.map(p => <li>{(new Date(p.utcOpenTime)).toLocaleString()}</li>)}
-    // </ul>;
+
+    tradeInFo.currentTimeSeries = timeSeries;
+
     return getDefaultComponent("");
-    return <div>
-        {/* <button onClick = {()=>{setState({symbol:"AKROBTC"})}}>test</button> */}
-        <LightweightChart timeSeries={timeSeries}/>
-     </div>;
 }
 
-export const ChartTest = ChartTestComponent;
-
-//React.memo(
+export const Chart = ChartComponent;
 
 interface ILightweightChartProps{
     timeSeries: any
 }
 
 export default class LightweightChart extends React.Component<ILightweightChartProps> {
-//export 
     divRef: React.RefObject<HTMLElement>;
     timeSeries: any;
     chartSeries: any;
 
     constructor(props: ILightweightChartProps) {
-      super(props);
-      // create a ref to store the textInput DOM element
-      this.divRef = React.createRef();
-      this.timeSeries = props.timeSeries;
-      this.chartSeries = null;
-      //this.focusTextInput = this.focusTextInput.bind(this);
-      //this.setState({timeSeries:[]});
-      console.log("CONTRUCT....");
+        super(props);
+        // create a ref to store the textInput DOM element
+        this.divRef = React.createRef();
+        this.timeSeries = props.timeSeries;
+        this.chartSeries = null;
     }
   
     componentDidMount(){
-        if(this.divRef.current != null)
-        this.chartSeries = mountChart(this.divRef.current, this.timeSeries);
-        //@ts-ignore
-        window.chartSeries = this.chartSeries;
-        console.log("got did mount....", this.chartSeries);
+        if(this.divRef.current != null){
+            this.chartSeries = mountChart(this.divRef.current, this.timeSeries);
+        }
     }
   
     render() {
-      console.log("Rerending chart....", this.timeSeries, this.chartSeries, this.props.timeSeries[0]);
-      if(this.props.timeSeries.length != 0)
-        this.timeSeries = this.props.timeSeries;
+        if(this.props.timeSeries && this.props.timeSeries.length != 0)
+            this.timeSeries = this.props.timeSeries;
 
-      if(this.divRef.current != null && this.chartSeries != null){
-        //this.chartSeries = mountChart(this.divRef.current, this.timeSeries);
-        //@ts-ignore
-        window.storedChartSeries = this.chartSeries;
-        this.chartSeries.setData(this.timeSeries);
-
-        //@ts-ignore
-        window.curTimeSeries = this.timeSeries;
-
-      }
-      //candleSeries.setData(timeSeries);
-      // tell React that we want to associate the <input> ref
-      // with the `textInput` that we created in the constructor
-      return (
-        <div ref={this.divRef} />
-      );
+        if(this.divRef.current != null && this.chartSeries != null){
+            this.chartSeries.setData(this.timeSeries);
+        }
+        return (
+            <div ref={this.divRef as LegacyRef<HTMLDivElement>} />
+        );
     }
   }
 
@@ -299,15 +202,7 @@ function mountChart(HtmlElement: HTMLElement, timeSeries: any){
     var chart = createChart(HtmlElement, {
         localization: {
             dateFormat: 'dd/MM/yyyy',
-            // timeFormatter: (businessDayOrTimestamp: any) => {
-            //     // console.log(businessDayOrTimestamp);
-    
-            //     if (LightweightCharts.isBusinessDay(businessDayOrTimestamp)) {
-            //         return 'Format for business day';
-            //     }
-    
-            //     return 'Format for timestamp';
-            // },
+            priceFormatter: (price: number) => price.toPrecision(8),
         },
         width: 600,
         height: 300,
@@ -318,9 +213,11 @@ function mountChart(HtmlElement: HTMLElement, timeSeries: any){
         grid: {
             vertLines: {
                 color: 'rgba(197, 203, 206, 0.5)',
+                visible: true,
             },
             horzLines: {
                 color: 'rgba(197, 203, 206, 0.5)',
+                visible: true,
             },
         },
         // crosshair: {
@@ -334,28 +231,21 @@ function mountChart(HtmlElement: HTMLElement, timeSeries: any){
             timeVisible: true,
             secondsVisible: false,
         },
-    });
+        priceScale: {
+            position: 'right',
+            mode: 1,
+            autoScale: true,
+            // invertScale: true,
+            alignLabels: false,
+            borderVisible: true,
+            borderColor: '#555ffd',
+            scaleMargins: {
+                top: 0.30,
+                bottom: 0.25,
+            },
+        },
+    } as any);
 
-
-    //@ts-ignore
-    window.vScaleProvider = (original: any) => {
-        return original();
-        var autoVScaleOff = {
-
-            priceRange: null,
-            margins: null,
-        }
-    };
-
-     //@ts-ignore
-     window.vScaleOff = (original: any) => {
-        //return original();
-        var autoVScaleOff = {
-
-            priceRange: null,
-            margins: null,
-        }
-    };
 
     var green = "rgba(0, 255, 0, 1)"; 
     var red = "rgba(255, 0, 0, 1)";
@@ -366,22 +256,7 @@ function mountChart(HtmlElement: HTMLElement, timeSeries: any){
         borderUpColor: green,
         wickDownColor: red,
         wickUpColor: green,
-
-        //@ts-ignore
-        //autoscaleInfoProvider: window.vScaleProvider,
-        // (original: any) => {
-        //     return original();
-        //     var autoVScaleOff = {
-
-        //         priceRange: null,
-        //         margins: null,
-        //     }
-        // },
     });
-    //@ts-ignore
-    window.chart = chart;
-    //@ts-ignore
-    window.candleSeries = candleSeries;
 
     candleSeries.setData(timeSeries);
         

@@ -1,0 +1,91 @@
+body{
+    color: white;
+    background-color: black;
+    font-family: sans-serif;
+}
+table{
+    border-spacing: 0px;
+}
+.pairListing{
+    /* background-color: black; */
+}
+.pairListing td, th{
+    padding: 10px;
+    /* border: 1px #777 outset; */
+    background: linear-gradient(0deg, #101010, #151515);
+}
+.pairListing th{
+    background: #333;
+    text-align: left;
+}
+.pairListing h2{
+    padding-bottom: 10px;
+}
+.pairListing h4{
+    padding-bottom: 7px;
+}
+.pairListing .Mui-selected {
+    background-color: #333 !important;
+}
+h1{
+    margin: 0;
+    font-variant: small-caps;
+}
+
+.pairPreview{
+    display: flex;
+    flex-direction: row;
+}
+.pairPreview>div{
+
+}
+.pairPreview .pricePreview{
+    padding: 0px 20px;
+}
+
+.chart{
+    border: 1px inset;
+}
+.searchField{
+    background: none !important;
+    border: 1px inset;
+}
+.searchField .MuiInputBase-input, *{
+    color: white;
+}  
+h2, h3, h4{
+    margin: 0;
+    padding-bottom: 10px;
+}
+
+.MuiCollapse-wrapper{
+    background: linear-gradient(0deg, #101010, #151515) !important;
+}
+.MuiAccordionSummary-root{
+    background: #333 !important;
+}
+/* .pairListingTable{
+    background-color: white;
+}    */
+
+.section{
+    /* border: 1px white groove; */
+    padding: 10px;
+    background: linear-gradient(0deg, #101010, #151515);
+    margin: 5px;   
+}
+.paginator .MuiPaginationItem-root{
+    color: white;
+}
+.listingHighlight{
+    background: #ddd;
+    color: black;
+}
+.listingTr:hover {
+    background: #333;
+    cursor: pointer;
+}
+.radioSelect > button{
+    background: #333;
+    color:white;
+}
