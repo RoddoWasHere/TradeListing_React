@@ -6,12 +6,8 @@ body{
 table{
     border-spacing: 0px;
 }
-.pairListing{
-    /* background-color: black; */
-}
 .pairListing td, th{
     padding: 10px;
-    /* border: 1px #777 outset; */
     background: linear-gradient(0deg, #101010, #151515);
 }
 .pairListing th{
@@ -31,13 +27,9 @@ h1{
     margin: 0;
     font-variant: small-caps;
 }
-
-.pairPreview{
+.pairPreview {
     display: flex;
     flex-direction: row;
-}
-.pairPreview>div{
-
 }
 .pairPreview .pricePreview{
     padding: 0px 20px;
@@ -64,12 +56,7 @@ h2, h3, h4{
 .MuiAccordionSummary-root{
     background: #333 !important;
 }
-/* .pairListingTable{
-    background-color: white;
-}    */
-
 .section{
-    /* border: 1px white groove; */
     padding: 10px;
     background: linear-gradient(0deg, #101010, #151515);
     margin: 5px;   
